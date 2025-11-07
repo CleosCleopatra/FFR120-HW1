@@ -68,8 +68,53 @@ def total_force_cutoff(x, y, N_particles, sigma, epsilon, neighbours):
                 Fy[i] += F * (y[i] - y[j]) / r
     return Fx, Fy
 
+def graph(x, L, y):
+    window_size=600
+    tk=Tk()
+    tk.geometry(f'{window_size+20}x{window_size +20}')
+    tk.configure(background = '#000000')
+    canvas = Canvas(tk, background = '#ECECEC')
+    tk.attributes('-topmost', 0)
+    canvas.place(x=10, y=10, height=window_size, width=window_size)
+
+    specialparticle=canvas.create_oval(
+        (x[0]-sigma / 2) / L *window_size +window_size / 2,
+        (y[0] - sigma / 2) / L * window_size +window_size / 2,
+        (x[0] + sigma / 2) / L * window_size + window_size / 2,
+        (y[0] + sigma / 2) / L * window_size + window_size /2,
+        outline='#000000',
+        fill='#000000', 
+    )
+    particles = []
+    for j in range(1, N_particles):
+        particles.append(
+            canvas.create_oval(
+                (x[j] - sigma / 2) / L * window_size + window_size / 2, 
+                (y[j] - sigma / 2) / L * window_size + window_size / 2,
+                (x[j] + sigma / 2) / L * window_size + window_size / 2, 
+                (y[j] + sigma / 2) / L * window_size + window_size / 2,
+                outline='#00C0C0', 
+                fill='#00C0C0',
+            )
+        )
+    tk.title(f'Final time')
+    tk.update_idletasks
+    tk.update()
+    time.sleep(1)
+
+
 def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x_max, y_min, y_max, nphi, cutoff_radius):
+    #Picking the particle to follow
+    index_to_follow=int(len(x)/2)
+
+    msd_values=[]
+    past_values_x=[]
+    past_values_y=[]
+    past_values_x.append(x[index_to_follow])
+    past_values_y.append(y[index_to_follow])
+
     for t in range(int(T_tot/dt)):
+        print(t)
         x_half = x + 0.5 * vx * dt
         y_half = y + 0.5 * vy * dt
 
@@ -82,6 +127,7 @@ def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x
         ny = y_half + 0.5 * nvy * dt
 
         #Reflecting boundaries
+
         for j in range(N_particles):
             if nx[j] < x_min:
                 nx[j] = x_min + (x_min - nx[j])
@@ -98,7 +144,15 @@ def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x
             if ny[j] > y_max:
                 ny[j] = y_max - (ny[j] - y_max)
                 nvy[j] = - nvy[j]
-        
+            
+            if j==index_to_follow:
+                past_values_x.append(nx)
+                past_values_y.append(ny)
+
+
+            #msd_values[j] += (nx[j]-x[j]) ** 2 + (ny[j] - y[j]) ** 2
+
+
         nv = np.sqrt(nvx ** 2 + nvy **2)
         for i in range(N_particles):
             nphi[i] = math.atan2(nvy[i], nvx[i])
@@ -114,11 +168,18 @@ def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x
         v = nv
         phi = nphi
 
-def part_1(L):
+    sums=0
+    for val in msd_values:
+        sums+= val
+    msd_final=sums/((int(T_tot/dt))- )
+
+
+    return x,y, msd_values
+
+import matplotlib.pyplot as plt
+
+def main_part(L):
     #Set initial positions:
-    position=[]
-    velocity=[]
-    step=L/10
     x_min, x_max, y_min, y_max=-L/2, L/2, -L/2, L/2
     cutoff_radius=5*sigma #WHat does this do?
     
@@ -152,24 +213,13 @@ def part_1(L):
     nvx=np.zeros(N_particles)
     nvy = np.zeros(N_particles)
 
-    running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x_max, y_min, y_max, nphi, cutoff_radius)
+    final_x, final_y, msd=running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x_max, y_min, y_max, nphi, cutoff_radius)
+    graph(final_x, L, final_y)
+    plt.plot(np.arange(0, T_tot, dt), msd)
+    plt.show()
 
-    #new_position=[]
-    #new_velocity=[]
-    #for i in range(N):
-    #    for j in range(2):
-    #        position_half=position[i][j]+velocity[i][j]*(time_step/2)
-    #        force=0
-    #        for other in range(N):
-    #            if other!=i:
-    #                dist=np.sqrt((position[i][j]-position[other][j])**2+(position[i][j]-position[other][j])**2)
-    #                force+=24*(parameter/dist)*(2*(diameter/dist)**12-(diameter/dist)**6)#
 
-    #        F_half=F(position_half)    =-(U(r_n+\delta r)- U(r_n-\delta r))/(2 \Delta r)    #F(r)=-\Delta U(r)
-    #        new_velocity.append(velocity[i][j]+())
 
-    #Then velocity v_{n+1} is calculated using F_{n+1/2}=F(r_{n+1/2})
-    #FInally yhe position is advanced for another half time step to r_{n+1}
-
-part_1(10*sigma)
+#pt 1
+main_part(10*sigma)
 
