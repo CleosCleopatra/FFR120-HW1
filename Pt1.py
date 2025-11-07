@@ -20,7 +20,7 @@
 
 
 
-Force=m*a
+#Force=m*a
 
 
 import numpy as np
@@ -39,8 +39,10 @@ parameter=1
 magnitude=1
 dt=0.001
 T_tot=10
+v0=1
+eps = 1 #Energy, should I hav this?
 
-def list_neighbouts(x,y,N_particles, cutoff_radius):
+def list_neighbours(x,y,N_particles, cutoff_radius):
     neighbours=[]
     neighbour_number=[]
     for j in range(N_particles):
@@ -55,7 +57,7 @@ def total_force_cutoff(x, y, N_particles, sigma, epsilon, neighbours):
     Fx=np.zeros(N_particles)
     Fy=np.zeros(N_particles)
     for i in range(N_particles):
-        for j in list(neighbouts[i][0]):
+        for j in list(neighbours[i][0]):
             if i != j:
                 r2 = (x[i] - x[j]) ** 2 + (y[i] - y[j]) ** 2
                 r = np.sqrt(r2)
@@ -66,12 +68,12 @@ def total_force_cutoff(x, y, N_particles, sigma, epsilon, neighbours):
                 Fy[i] += F * (y[i] - y[j]) / r
     return Fx, Fy
 
-def running():
-    for t in range(T_tot/dt):
+def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x_max, y_min, y_max, nphi, cutoff_radius):
+    for t in range(int(T_tot/dt)):
         x_half = x + 0.5 * vx * dt
         y_half = y + 0.5 * vy * dt
 
-        dx, fy=\ total_force_cutoff(x_half, y_half, N_particles, sigma, eps, neighbours)
+        fx, fy= total_force_cutoff(x_half, y_half, N_particles, sigma, eps, neighbours)
 
         nvx = vx + fx / m * dt
         nvy = vy + fy / m * dt
@@ -95,14 +97,14 @@ def running():
             
             if ny[j] > y_max:
                 ny[j] = y_max - (ny[j] - y_max)
-                nvy[j] = - nv[j]
+                nvy[j] = - nvy[j]
         
         nv = np.sqrt(nvx ** 2 + nvy **2)
         for i in range(N_particles):
             nphi[i] = math.atan2(nvy[i], nvx[i])
         
         if t % 10 == 0:
-            neighbours, neighbour_number = \ list_neighbouts(nx, ny, N_particles, cutoff_radius)
+            neighbours, neighbour_number = list_neighbours(nx, ny, N_particles, cutoff_radius)
         
         #Update variables
         x = nx
@@ -129,7 +131,7 @@ def part_1(L):
     phi0=(2*np.random.rand(N_particles)-1)*np.pi
 
     neighbours, neighbour_number=list_neighbours(x0,y0,N_particles, cutoff_radius)
-            velocity.append([np.cos(angle), np.sin(angle)])
+    #velocity.append([np.cos(angle), np.sin(angle)])
     #Leapfrog algorithm
     #Position is advanced for half a time step to obatin r_{n+1/2}
     #Current tiem
@@ -150,23 +152,24 @@ def part_1(L):
     nvx=np.zeros(N_particles)
     nvy = np.zeros(N_particles)
 
+    running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x_max, y_min, y_max, nphi, cutoff_radius)
 
-    new_position=[]
-    new_velocity=[]
-    for i in range(N):
-        for j in range(2):
-            position_half=position[i][j]+velocity[i][j]*(time_step/2)
-            force=0
-            for other in range(N):
-                if other!=i:
-                    dist=np.sqrt((position[i][j]-position[other][j])**2+(position[i][j]-position[other][j])**2)
-                    force+=24*(parameter/dist)*(2*(diameter/dist)**12-(diameter/dist)**6)
+    #new_position=[]
+    #new_velocity=[]
+    #for i in range(N):
+    #    for j in range(2):
+    #        position_half=position[i][j]+velocity[i][j]*(time_step/2)
+    #        force=0
+    #        for other in range(N):
+    #            if other!=i:
+    #                dist=np.sqrt((position[i][j]-position[other][j])**2+(position[i][j]-position[other][j])**2)
+    #                force+=24*(parameter/dist)*(2*(diameter/dist)**12-(diameter/dist)**6)#
 
-            F_half=F(position_half)    =-(U(r_n+\delta r)- U(r_n-\delta r))/(2 \Delta r)    #F(r)=-\Delta U(r)
-            new_velocity.append(velocity[i][j]+())
+    #        F_half=F(position_half)    =-(U(r_n+\delta r)- U(r_n-\delta r))/(2 \Delta r)    #F(r)=-\Delta U(r)
+    #        new_velocity.append(velocity[i][j]+())
 
     #Then velocity v_{n+1} is calculated using F_{n+1/2}=F(r_{n+1/2})
     #FInally yhe position is advanced for another half time step to r_{n+1}
 
-part1(10*sigma)
+part_1(10*sigma)
 
