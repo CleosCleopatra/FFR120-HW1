@@ -9,20 +9,20 @@
 #All equal to s_1 and the spins in the row N_2=N/2+d_half all equal to s_1 and the spins in the row N_2=N/2 + d_half all e
 
 
-
+"""
 
 #Implement function to calculate the probability distribution given the energies of the possible states of the system
 import numpy as np 
     
 def probability_distribution(Ei):
-    """
+
     Function to generate the probability distribution for a system with states 
     with Ei energies.
     
     Parameters
     ==========
     Ei : Array (energies) [kBT].
-    """
+    
     
     Z = sum(np.exp(- Ei))  # Partition function.
     
@@ -62,7 +62,7 @@ plt.show()
 #
 
 def next_state_3(x, pi):
-    """
+    
     Function to generate the next state given the probability distribution and 
     the current state. 
     Specialized to the case of 3 states (0, 1, 2).
@@ -71,7 +71,7 @@ def next_state_3(x, pi):
     ==========
     x  : current state (between 0 and 2)
     pi : probability distribution
-    """
+    
     
     if x not in (0, 1, 2):
         raise ValueError('x must be 0 or 1 or 2')
@@ -153,7 +153,6 @@ print(f"Spin lattice created:  N_up={N_up}  N_down={N_down}")
 
 #Write function that returns the values of the neighbours of the spin position
 def neighboring_spins(i_list, j_list, sl):
-    """
     Function returning the position of the neighbouring spins of a list of 
     spins identified by their positions in the spin lattice.
     
@@ -162,7 +161,7 @@ def neighboring_spins(i_list, j_list, sl):
     i_list : Spin position first indices.
     j_list : Spin position second indices.
     sl : Spin lattice.
-    """
+    
 
     Ni, Nj = sl.shape  # Shape of the spin lattice.
     
@@ -191,7 +190,7 @@ def neighboring_spins(i_list, j_list, sl):
     return sl_u, sl_d, sl_l, sl_r
 
 def energies_spins(i_list, j_list, sl, H, J):
-    """
+    
     Function returning the energies of the states for the spins in given 
     positions in the spin lattice.
     
@@ -200,7 +199,7 @@ def energies_spins(i_list, j_list, sl, H, J):
     i_list : Spin position first indices.
     j_list : Spin position second indices.
     sl : Spin lattice.
-    """
+    
     
     sl_u, sl_d, sl_l, sl_r = neighboring_spins(i_list, j_list, sl)
     
@@ -213,7 +212,7 @@ def energies_spins(i_list, j_list, sl, H, J):
 
 
 def probabilities_spins(i_list, j_list, sl, H, J, T):
-    """
+    
     Function returning the energies of the states for the spins in given 
     positions in the spin lattice.
     
@@ -222,7 +221,7 @@ def probabilities_spins(i_list, j_list, sl, H, J, T):
     i_list : Spin position first indices.
     j_list : Spin position second indices.
     sl : Spin lattice.
-    """
+    
     
     E_u, E_d = energies_spins(i_list, j_list, sl, H, J)
     
@@ -325,7 +324,260 @@ for row in N:
 
 
 
-N>=100
+N=2 #What is this supposed to be ?
+N_oth=101 #?
+Eb = 2 #energy barrier, what is this supposed to be
+xi = np.arange(N) 
+
+Ei = np.array([0,Eb,0]) #Energies for the different states? Change since there should be more states?
+
+pi, Z=probability_distribution(Ei)
+
+#Plot probability distribution
+plt.bar(xi, Ei, color='#FF8000', width=0.4, edgecolor='#A04000')
+plt.title('Energy spectrum')
+plt.xlabel('states')
+plt.ylabel('Energy (kBT)')
+plt.show()
+
+plt.bar(xi, pi, color='c', width=0.4, edgecolor='k')
+plt.title('Probability distribution')
+plt.xlabel('states')
+plt.ylabel('Probability')
+plt.show()
+
+def next_state_2(x,pi):
+    if x not in (-1, 1):
+        raise ValueError('x must be -1 or 1')
+    
+    p = np.random.rand()
+
+    if p < pi[0]:
+        x_next=-1
+    else:
+        x_next=1
+    
+    return x_next
+
+N_steps=6000
+x = np.zeros(N_steps); x[0]=0
+
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import numpy as np
+
+N = 100 #Size of the spin lattice
+H = 0 #External field
+J = 1 #spin-spin coupling
+T = 2.3 #temperature
+
+sl = 2 * np.random.randint(2, size=(N,N))-1
+
+N_up = np.sum(sl + 1) / 2
+N_down = N * N - N_up
+
+print(f"Spin lattice created: N_up={N_up} N_down={N_down}")
+
+def neighbouring_spins(i_list, j_list, sl):
+    #returns position of the neighbouting spin of a list of spins
+    #identified by their position in the spin lattice
+    #i_list: spin position first indices, j_list= spin position second indicies, sl: spin lattie
+    Ni, Nj = sl.shape # shape of the spin lattice, do I really need this?
+
+    #position neighbours right
+    i_r = i_list
+    j_r = list(map(lambda x: (x+1) % Nj, j_list)) #Why the %
+
+    #Position neighbours left
+    i_l = i_list
+    j_l = list(map(lambda x:(x - 1) % Nj, j_list))
+
+    #Position neightbours up
+    i_u = list(map(lambda x: (x - 1) % Ni, i_list))
+    j_u = j_list
+
+    #Position neighbours down
+    i_d = list(map(lambda x:(x + 1) % Ni, i_list))
+    j_d = j_list
+
+    #Spin values
+    sl_u = sl[i_u, j_u]
+    sl_d = sl[i_d, j_d]
+    sl_l = sl[i_l, j_l]
+    sl_r = sl[i_r, j_r]
+
+    return sl_u, sl_d, sl_l, sl_r
+
+def energies_spins(i_list, j_list, sl, H, J):
+    """
+    Returns the energies of the states for spin in given position
+
+    Parameters
+    ==========
+    i_list : Spin position first indices
+    j_list : Spin position second indices
+    sl : spin lattice
+    """
+
+    sl_u, sl_d, sl_l, sl_r = neighbouring_spins(i_list, j_list, sl)
+
+    sl_s = sl_u + sl_d + sl_l + sl_r 
+
+    E_u = - H - J * sl_s
+    E_d = H + J * sl_s
+
+    return E_u, E_d
+
+def probabilities_spins(i_list, j_list, sl, H, J, T):
+    """
+    Energies of the states for the spins in a given position
+
+    Parameters
+    ==========
+    i_list : spin position first indices
+    j_list : spin position second indices
+    sl : spin lattice
+    """
+
+    E_u, E_d = energies_spins(i_list, j_list, sl, H, J)
+
+    Ei = np.array([E_u, E_d])
+
+    Z = np.sum(np.exp(- Ei / T), axis=0) 
+    pi = 1 / np.array([Z, Z]) * np.exp(- Ei / T)
+
+    return pi, Z
+
+#Each time step, we randomly choose S spins
+#For each spin, we calculate the posisble energies of the configurations with spin up and down
+#Based on these, we randomly draw the status of each spin in the next time step
+import random
+import time
+#from tkinter import *
+
+N_steps = 6000
+f = 0.05 #Number of randomly selected spins to flip-test
+#N_skip = 10 #Visualise status every N_skip steps 
+
+#window_size = 600
+
+#tk = Tk()
+#tk.geometry(f'{window_size+20}x{window_size + 20}')
+#tk.configure(background='#000000')
+
+#canvas = Canvas(tk, background='#ECECEC')
+#tk.attributes('-topmost', 0)
+#canvas.place(x=10, y=10, height = window_size, width= window_size)
+
+N_spins = np.size(sl) #tot numb of spins in spin lattice
+Ni, Nj = sl.shape
+
+S = int(np.ceil(N_spins * f)) #num of randomly selected spins
+
+step = 0
+
+#def stop_loop(event):
+#    global running
+#    running = False
+#tk.bind("<Escape>", stop_loop) #Bind esccape key to stop loop
+#running = True #Flag to control loop
+
+def run(d_half):
+    for i in range(N_steps): 
+        sum=0
+        for i in range(N):
+            sum_loc=0
+            for j in range(N):
+                around_sl = sl[i+1][j]+sl[i-1][j]+ sl[i][j+1] + sl[i][j-1]
+                sum_loc += sl[i][j] * around_sl
+            sum += sum_loc
+        
+        e_tot = -(J/(2 * N**2)) * sum
+                
+        ns = random.sample(range(N_spins), S)
+
+        i_list = list(map(lambda x: x % Ni, ns))
+        j_list = list(map(lambda x: x // Ni, ns))
+
+        pi, Z = probabilities_spins(i_list, j_list, sl, H, J, T)
+
+        rn = np.random.rand(S)
+        for i in range(S):
+            if rn[i] > pi[0,i]:
+                sl[i_list[i], j_list[i]] = -1
+            else:
+                sl[i_list[i], j_list[i]] = 1
+        
+    return sl, e_tot
+
+d_half_list=[3, 5, 7, 10]
+e_val_list=[]
+plot_val_list=[]
+for d_half in d_half_list:
+    e_val, plot_val = run(d_half)
+    e_val_list.append(e_val)
+    plot_val_list.append(plot_val)
+
+
+    
+    #Update animation frame
+    #if step % N_skip == 0:
+    #    canvas.delete('all')
+    #    spins = []
+    #    for i in range(Ni):
+    #        for j in range(Nj):
+    #            spin_color = '#FFFFFF' if sl[i,j] == 1 else '#000000'
+    #            spins.append(
+    #                canvas.create_rectangle(
+    #                    j / Nj * window_size, 
+    #                    i / Ni * window_size,
+    #                    (j + 1) / Nj * window_size, 
+    #                    (i + 1) / Ni * window_size,
+    #                    outline='', 
+    #                    fill=spin_color,
+    #                )
+    #            )
+    #    
+    #    tk.title(f'Iteration {step}')
+    #    tk.update_idletasks()
+    #    tk.update()
+    #    time.sleep(0.1)  # Increase to slow down the simulation.
+
+    #step += 1
+
+#tk.update_idletasks()
+#tk.update()
+#tk.mainloop() #Release animation handle (close window to finish) 
+
+
+
+
+"""
+
+
+
+
 H=0
 J = 1
 kB = 1
@@ -339,7 +591,6 @@ sl = 2 * np.random.randint(2, size=(N, N)) - 1
 
 d_half_list=[3,5,7,10]
 
-def monte_carlo_step():
 
 
 def for_different_d_half(d_half):
@@ -365,9 +616,10 @@ def for_different_d_half(d_half):
 final_state=[]
 e_tot=[]
 for d_half in d_half_list:
-    loc_final_state, loc_e_tot=for_different_d_falf(d_half)
+    loc_final_state, loc_e_tot=for_different_d_half(d_half)
     final_state.append(loc_final_state)
     e_tot.append(loc_e_tot)
     
 
 
+"""
