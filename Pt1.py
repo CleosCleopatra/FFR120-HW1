@@ -41,7 +41,7 @@ dt=0.001
 T_tot=10
 v0=1
 eps = 1 #Energy, should I hav this?
-S=10000 #Change back to 10 000?
+S=10000
 
 def list_neighbours(x,y,N_particles, cutoff_radius):
     neighbours=[]
@@ -54,11 +54,11 @@ def list_neighbours(x,y,N_particles, cutoff_radius):
     return neighbours, neighbour_number
 
 
-def total_force_cutoff(x, y, N_particles, sigma, epsilon):
+def total_force_cutoff(x, y, N_particles, sigma, epsilon, neighbours):
     Fx=np.zeros(N_particles)
     Fy=np.zeros(N_particles)
     for i in range(N_particles):
-        for j in range(N_particles):
+        for j in list(neighbours[i][0]):
             if i != j:
                 r2 = (x[i] - x[j]) ** 2 + (y[i] - y[j]) ** 2
                 r = np.sqrt(r2)
@@ -104,7 +104,7 @@ def graph(x, L, y):
     time.sleep(1)
 
 
-def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, x_min, x_max, y_min, y_max, nphi, cutoff_radius):
+def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x_max, y_min, y_max, nphi, cutoff_radius):
     #Picking the particle to follow
     index_to_follow=int(len(x)/2)
 
@@ -119,7 +119,7 @@ def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, x_min, x_max, y_min,
         x_half = x + 0.5 * vx * dt
         y_half = y + 0.5 * vy * dt
 
-        fx, fy= total_force_cutoff(x_half, y_half, N_particles, sigma, eps)
+        fx, fy= total_force_cutoff(x_half, y_half, N_particles, sigma, eps, neighbours)
 
         nvx = vx + fx / m * dt
         nvy = vy + fy / m * dt
@@ -154,8 +154,8 @@ def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, x_min, x_max, y_min,
         for i in range(N_particles):
             nphi[i] = math.atan2(nvy[i], nvx[i])
         
-        #if t % 10 == 0:
-        #    neighbours, neighbour_number = list_neighbours(nx, ny, N_particles, cutoff_radius)
+        if t % 10 == 0:
+            neighbours, neighbour_number = list_neighbours(nx, ny, N_particles, cutoff_radius)
         
         #Update variables
         x = nx
@@ -169,7 +169,6 @@ def running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, x_min, x_max, y_min,
     for n in range(S):
         sum=0
         for i in range(S-n):
-            print(f"here we have S={S}, n={n} and i={i}")
             sum+=(past_values_x[i+n]-past_values_x[i])**2+(past_values_y[i+n]-past_values_y[i])**2
         msd_values.append(sum/(S-n))
 
@@ -198,7 +197,7 @@ def main_part(L):
     y0=y0.flatten()[:N_particles]
     phi0=(2*np.random.rand(N_particles)-1)*np.pi
 
-    #neighbours, neighbour_number=list_neighbours(x0,y0,N_particles, cutoff_radius)
+    neighbours, neighbour_number=list_neighbours(x0,y0,N_particles, cutoff_radius)
     #velocity.append([np.cos(angle), np.sin(angle)])
     #Leapfrog algorithm
     #Position is advanced for half a time step to obatin r_{n+1/2}
@@ -220,7 +219,7 @@ def main_part(L):
     nvx=np.zeros(N_particles)
     nvy = np.zeros(N_particles)
 
-    final_x, final_y, msd, past_x, past_y=running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, x_min, x_max, y_min, y_max, nphi, cutoff_radius)
+    final_x, final_y, msd, past_x, past_y=running(x, y, vx, vy, x_half, y_half, nx, ny, nvx, nvy, neighbours, x_min, x_max, y_min, y_max, nphi, cutoff_radius)
     #graph(final_x, L, final_y)
     plt.scatter(final_x, final_y)
     plt.title("Final x and y values")
@@ -240,4 +239,8 @@ def main_part(L):
 
 #pt 1
 main_part(10*sigma)
+
+#pt 2
+main_part(16*sigma)
+
 
