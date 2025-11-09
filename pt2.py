@@ -353,6 +353,10 @@ def for_different_d_half(d_half):
     
     for step in num_steps:
         for spin in sl:
+            ns = random.sample(range(Nspins), S)
+
+            i_list = list(map(lambda x: x % N, ns)) 
+            j_list = list(map(lambda x: x // N, ns)) 
             pi, Z = probabilities_spins(i_list, j_list, sl, H, J, T) #return energies of states for a spin, i_list: spin position first indices, j_list: spin position second indices, sl: spin lattice
             #Z is partition function
             next_state_3(spin, pi)   #generates the next state given x: current state and pi: probability distribution
