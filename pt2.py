@@ -422,6 +422,8 @@ def neighbouring_spins(i_list, j_list, sl):
     j_d = j_list
 
     #Spin values
+    print(sl.shape)
+    print(f"i_u is {i_u} and j_u is {j_u}")
     sl_u = sl[i_u, j_u]
     sl_d = sl[i_d, j_d]
     sl_l = sl[i_l, j_l]
@@ -506,10 +508,13 @@ step = 0
 def run(d_half):
     for i in range(N_steps): 
         sum=0
-        for i in range(N):
+        for i in range(N-1):
             sum_loc=0
-            for j in range(N):
-                around_sl = sl[i+1][j]+sl[i-1][j]+ sl[i][j+1] + sl[i][j-1]
+            for j in range(N-1):
+                i_list = [i+1, i-1, i, i]
+                j_list = [j, j, j+1, j-1]
+                s_u, s_d, s_l, s_r = neighbouring_spins(i_list, j_list, sl)
+                around_sl = s_u + s_d + s_l + s_r
                 sum_loc += sl[i][j] * around_sl
             sum += sum_loc
         
@@ -530,14 +535,18 @@ def run(d_half):
                 sl[i_list[i], j_list[i]] = 1
         
     return sl, e_tot
+import matplotlib.pyplot as plt
 
 d_half_list=[3, 5, 7, 10]
 e_val_list=[]
 plot_val_list=[]
 for d_half in d_half_list:
-    e_val, plot_val = run(d_half)
+    plot_val, e_val = run(d_half)
     e_val_list.append(e_val)
     plot_val_list.append(plot_val)
+    plt.plot(plot_val)
+    plt.show()
+    
 
 
     
