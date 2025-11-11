@@ -180,16 +180,26 @@ import matplotlib.pyplot as plt
 d_half_list=[3, 5, 7, 10]
 e_val_list=[]
 plot_val_list=[]
+
+def check_fixed_rows(sl_loc, N1, N2, s1=1, s2=1):
+    row1_ok=np.all(sl_loc[N1, :]==s1)
+    row2_ok=np.all(sl_loc[N2, :] ==  s2)
+
+    print(f"row N1={N1} correct? {row1_ok}")
+    print(f"row N2= {N2} correct? {row2_ok}")
+
 for idx, d_half in enumerate(d_half_list):
     plot_val, e_vals, e_in_end = run(d_half)
+    N1 = int(N/2 - d_half)
+    N2 = int(N/2 + d_half)
+    check_fixed_rows(plot_val, N1, N2)
+
     e_val_list.append(e_vals)
     plot_val_list.append(plot_val)
     #print(f"Here i is {i}")
     plt.figure(1)
     plt.subplot(2,2,idx+1)
     plt.imshow(plot_val, cmap = 'Greys', vmin=-1, vmax=1)
-    N1 = int(N/2 - d_half)
-    N2 = int(N/2 + d_half)
     plt.axhline(y=N1, color='red', linewidth=0.5)
     plt.axhline(y=N2, color='red', linewidth=0.5)
 
@@ -209,4 +219,5 @@ for idx, d_half in enumerate(d_half_list):
 
     
 plt.show()
+
 
