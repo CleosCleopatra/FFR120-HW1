@@ -3,10 +3,10 @@
 
 
 import random
-random.seed(5)
-
-
 import numpy as np
+
+random.seed(5)
+np.random.seed(5)
 
 N = 100 #Size of the spin lattice
 H = 0 #External field
@@ -115,52 +115,64 @@ def run(d_half):
     sl_loc = sl.copy()
     N1 = int(N/2 - d_half)
     N2 = int(N / 2 + d_half)
-    for row in range(len(sl)):
-        for column in range(len(sl[1])):
-            if row == N1:
-                sl_loc[row][column] = s1
-            if row == N2:
-                sl_loc[row][column] = s2
+    sl_loc[N1, :] = s1
+    sl_loc[N2, :] = s2
 
     e_in_end=0
     e_vals = []  
+    
     for i in range(N_steps): 
         print(i)
-        sum=0
-        for i in range(N):
-            sum_loc=0
-            for j in range(N):
-                i_list = [i]
-                j_list = [j]
-                s_u, s_d, s_l, s_r = neighbouring_spins(i_list, j_list, sl_loc)
-                around_sl = int(s_u) + int(s_d) + int(s_l) + int(s_r)
-                sum_loc += sl_loc[i][j] * around_sl
-                #print(f"sum_loc is {sum_loc} and sum is {sum}")
-            sum += sum_loc
+        i_list = list(range(N))
+        j_list = list(range(N))
+
+        s_u = np.roll(sl_loc, -1, axis=0)
+        s_d = np.roll(sl_loc, 1, axis=0)
+        s_l = np.roll(sl_loc, -1, axis=1)
+        s_r = np.roll(sl_loc, 1, axis=1)
+        #s_u, s_d, s_l, s_r = neighbouring_spins(i_list, j_list, sl_loc)
+        #summan = [s_u[i][j]+s_d[i][j]+s_l[i][j]+s_r[i][j] for i in range(N) for j in range(N)]
+        sum_val = np.sum(sl_loc * (s_u + s_d + s_l + s_r))
+        #for i in range(N):
+        #    sum_loc=0
+        #    i_list = [i]
+        #    j_list = [j in range(N)]
+        #    s_u, s_d, s_l, s_r = neighbouring_spins(i_list, j_list, sl_loc)
+        #    sum = (int )
+        #    for j in range(N):
+        #        i_list = [i]
+        #        j_list = [j]
+        #        s_u, s_d, s_l, s_r = neighbouring_spins(i_list, j_list, sl_loc)
+        #        around_sl = int(s_u) + int(s_d) + int(s_l) + int(s_r)
+        #        sum_loc += sl_loc[i][j] * around_sl
+        #        #print(f"sum_loc is {sum_loc} and sum is {sum}")
+        #    sum += sum_loc
         
         
         
-        e_tot = -(J/(2 * N**2)) * sum
+        e_tot = -(J/(2 * N**2)) * sum_val
         #print(f"e_tot is {e_tot} and e_vals is {e_vals}, sum is {sum}")
         e_vals.append(e_tot)
                 
         ns = random.sample(range(N_spins), S)
 
-        i_list = list(map(lambda x: x % Ni, ns))
-        j_list = list(map(lambda x: x // Ni, ns))
+        i_list = list(map(lambda x: x % N, ns)) #column????? remove
+        j_list = list(map(lambda x: x // N, ns)) #row????? remove
 
         pi, Z = probabilities_spins(i_list, j_list, sl_loc, H, J, T)
 
         rn = np.random.rand(S)
-        for i in range(S):
-            if rn[i] > pi[0,i] and j_list[i] != N1:
-                sl_loc[i_list[i], j_list[i]] = -1
-            elif rn[i] <= pi[0, i] and j_list[i] != N2:
-                sl_loc[i_list[i], j_list[i]] = 1
-        if i>=N_steps-(N_steps/10):
+        for j in range(S):
+            if i_list[j] == N1 or i_list[j] == N2:
+                continue
+            elif rn[j] > pi[0,j]:
+                sl_loc[i_list[j], j_list[j]] = -1 #Is it supposed to be -1 here?
+            else:
+                sl_loc[i_list[j], j_list[j]] = 1
+        if i>=N_steps-(N_steps//10):
             e_in_end += e_tot
     
-    e_in_end /= (N_steps/10)
+    e_in_end /= (N_steps//10)
         
     return sl_loc, e_vals, e_in_end
 import matplotlib.pyplot as plt
@@ -168,21 +180,32 @@ import matplotlib.pyplot as plt
 d_half_list=[3, 5, 7, 10]
 e_val_list=[]
 plot_val_list=[]
-for i, d_half in enumerate(d_half_list):
-    plot_val, e_val = run(d_half)
-    e_val_list.append(e_val)
+for idx, d_half in enumerate(d_half_list):
+    plot_val, e_vals, e_in_end = run(d_half)
+    e_val_list.append(e_vals)
     plot_val_list.append(plot_val)
     #print(f"Here i is {i}")
     plt.figure(1)
-    plt.subplot(2,2,i+1)
-    plt.imshow(plot_val, cmap = 'Greys')
+    plt.subplot(2,2,idx+1)
+    plt.imshow(plot_val, cmap = 'Greys', vmin=-1, vmax=1)
+    N1 = int(N/2 - d_half)
+    N2 = int(N/2 + d_half)
+    plt.axhline(y=N1, color='red', linewidth=0.5)
+    plt.axhline(y=N2, color='red', linewidth=0.5)
 
     plt.figure(2)
-    plt.subplot(2,2, i+1)
+    plt.subplot(2,2, idx+1)
     #print(e_val)
     #print(N)
     #print(f"len of e_val is {len(e_val)} and N is {N_steps}")
-    plt.plot(range(N_steps), e_val)
+    plt.plot(range(N_steps), e_vals)
+
+    plt.text(
+        0.95, 0.95,
+        f'e_eq = {e_in_end: .3f}',
+        transform=plt.gca().transAxes,
+        ha='right', va='top'
+    )
 
     
 plt.show()
