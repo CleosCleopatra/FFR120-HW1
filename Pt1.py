@@ -218,7 +218,7 @@ def main_part(L):
     plt.title("Final x and y values")
     plt.show()
 
-    plt.plot(np.arange(0, S, 100), msd)
+    plt.plot(np.arange(0, S+100, 100), msd)
     plt.title("msd over time for one particle")
     plt.show()
 
