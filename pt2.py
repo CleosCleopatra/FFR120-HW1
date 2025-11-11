@@ -382,7 +382,8 @@ x = np.zeros(N_steps); x[0]=0
 
 
 
-
+import random
+random.seed(5)
 
 
 import numpy as np
@@ -393,6 +394,7 @@ J = 1 #spin-spin coupling
 T = 2.3 #temperature
 
 sl = 2 * np.random.randint(2, size=(N,N))-1
+   
 
 N_up = np.sum(sl + 1) / 2
 N_down = N * N - N_up
@@ -422,8 +424,8 @@ def neighbouring_spins(i_list, j_list, sl):
     j_d = j_list
 
     #Spin values
-    print(sl.shape)
-    print(f"i_u is {i_u} and j_u is {j_u}")
+    #print(sl.shape)
+    #print(f"i_u is {i_u} and j_u is {j_u}")
     sl_u = sl[i_u, j_u]
     sl_d = sl[i_d, j_d]
     sl_l = sl[i_l, j_l]
@@ -478,7 +480,7 @@ import random
 import time
 #from tkinter import *
 
-N_steps = 6000
+N_steps = 6000 #Swirch back to 6000 ?
 f = 0.05 #Number of randomly selected spins to flip-test
 #N_skip = 10 #Visualise status every N_skip steps 
 
@@ -504,48 +506,102 @@ step = 0
 #    running = False
 #tk.bind("<Escape>", stop_loop) #Bind esccape key to stop loop
 #running = True #Flag to control loop
-
+s1 = 1
+s2 = 1
 def run(d_half):
+    sl_loc = sl.copy()
+    N1 = N/2 - d_half
+    N2 = N / 2 + d_half
+    for row in range(len(sl)):
+        for column in range(len(sl[1])):
+            if row == N1:
+                sl_loc[row][column] = s1
+            if row == N2:
+                sl_loc[row][column] = s2
+
+    e_in_end=0
+    e_vals = []  
     for i in range(N_steps): 
+        print(i)
         sum=0
         for i in range(N-1):
             sum_loc=0
             for j in range(N-1):
-                i_list = [i+1, i-1, i, i]
-                j_list = [j, j, j+1, j-1]
-                s_u, s_d, s_l, s_r = neighbouring_spins(i_list, j_list, sl)
-                around_sl = s_u + s_d + s_l + s_r
-                sum_loc += sl[i][j] * around_sl
+                i_list = [i]
+                j_list = [j]
+                s_u, s_d, s_l, s_r = neighbouring_spins(i_list, j_list, sl_loc)
+                around_sl = int(s_u) + int(s_d) + int(s_l) + int(s_r)
+                sum_loc += sl_loc[i][j] * around_sl
+                #print(f"sum_loc is {sum_loc} and sum is {sum}")
             sum += sum_loc
         
+        
+        
         e_tot = -(J/(2 * N**2)) * sum
+        #print(f"e_tot is {e_tot} and e_vals is {e_vals}, sum is {sum}")
+        e_vals.append(e_tot)
                 
         ns = random.sample(range(N_spins), S)
 
         i_list = list(map(lambda x: x % Ni, ns))
         j_list = list(map(lambda x: x // Ni, ns))
 
-        pi, Z = probabilities_spins(i_list, j_list, sl, H, J, T)
+        pi, Z = probabilities_spins(i_list, j_list, sl_loc, H, J, T)
 
         rn = np.random.rand(S)
         for i in range(S):
-            if rn[i] > pi[0,i]:
-                sl[i_list[i], j_list[i]] = -1
-            else:
-                sl[i_list[i], j_list[i]] = 1
+            if rn[i] > pi[0,i] and j_list[i] != N1:
+                sl_loc[i_list[i], j_list[i]] = -1
+            elif rn[i] <= pi[0, i] and j_list[i] != N2:
+                sl_loc[i_list[i], j_list[i]] = 1
+        if i>=N_steps-(N_steps/10):
+            e_in_end += e_tot
+    
+    e_in_end /= len(e_in_end)
         
-    return sl, e_tot
+    return sl_loc, e_vals, e_in_end
 import matplotlib.pyplot as plt
 
 d_half_list=[3, 5, 7, 10]
 e_val_list=[]
 plot_val_list=[]
-for d_half in d_half_list:
+for i, d_half in enumerate(d_half_list):
     plot_val, e_val = run(d_half)
     e_val_list.append(e_val)
     plot_val_list.append(plot_val)
-    plt.plot(plot_val)
-    plt.show()
+    #print(f"Here i is {i}")
+    plt.figure(1)
+    plt.subplot(2,2,i+1)
+    plt.imshow(plot_val, cmap = 'Greys')
+
+    plt.figure(2)
+    plt.subplot(2,2, i+1)
+    #print(e_val)
+    #print(N)
+    #print(f"len of e_val is {len(e_val)} and N is {N_steps}")
+    plt.plot(e_val, np.arange(N_steps))
+
+    
+plt.show()
+
+
+#plt.subplot(2,2,1)
+#for rows in plot_val
+#plt.scatter(Ni,Nj, c=colours)#
+
+#plt.subplot(2,2,2)
+#plt.plot(x,y)
+
+#plt.subplot(2,2,3)
+#plt.plot(x,y)
+
+#plt.subplot(2,2,4)
+#plt.plot(x,y)
+
+#plt.show()
+#print(plot_val)
+#plt.plot(plot_val)
+#plt.show()
     
 
 
