@@ -18,6 +18,11 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
+import random
+from statistics import stdev
+
+np.random.seed(5)
+random.seed(5)
 
 def grow_trees(forest, p):
     """
@@ -33,6 +38,7 @@ def grow_trees(forest, p):
 
     new_trees = np.random.rand(Ni, Nj) #Random number in each place to calc whether tree grows
 
+    #print(f"p is {p} and new_trees is {new_trees}")
     new_trees_indices = np.where(new_trees <= p) #The indices at which new trees actually grow
     forest[new_trees_indices] = 1 #Add trees
 
@@ -150,21 +156,10 @@ def propagate_fire(forest, i0, j0):
     return fs, forest
 
 #Initalise system
-N = 100 #Side of the forest
+#N = 100 #Side of the forest
 p = 0.01 #Growth probability
 f = 0.2 #Lightning strike probability
 
-forest = np.zeros([N,N]) #Empty forest
-fire_size = [] #Empty list of fire sizes
-
-#Run simulation
-Ni, Nj = forest.shape
-
-target_num_fires = 300
-
-fire_history = []
-
-num_fires = 0
 
 """
 #Plot fire history over time
@@ -229,8 +224,9 @@ plt.show()
 
 import random
 
+"""
 def random_forest(Ni, Nj, T):
-    """
+    
     Function to return a randomly grown forest.
     Returns also the coordinates of the random ignition point
     
@@ -239,15 +235,15 @@ def random_forest(Ni, Nj, T):
     Ni: First dimension of the forest array
     Nj: Second dimension fo the forest array
     T: Integer, num of trees in forest
-    """
+    
 
-    rf = np.zeros([Ni, Nj])
+    #rf = np.zeros([Ni, Nj])
 
     nt = random.sample(range(Ni * Nj), T)
     i_list = list(map(lambda x: x % Ni, nt))
     j_list = list(map(lambda x: x // Ni, nt))
 
-    rf[i_list, j_list] = 1
+    #rf[i_list, j_list] = 1
 
     #Coordinates of where lightning strikes
     ignition = np.random.randint(T)
@@ -255,76 +251,8 @@ def random_forest(Ni, Nj, T):
     j_fire = j_list[ignition] 
 
     return rf, i_fire, j_fire
+"""
 
-#Comparision of the fires:
-#N = 100 #Side of the forest
-#p = 0.01 #Growth probability
-#f = 0.2 #Lightning strike probability
-#target_num_fires = 300
-
-#forest = np.zeros([N,N])
-#fire_size = []
-rf_fire_size = [] #Empty list of fire history for random forest
-
-#num_fires = 0
-#Ni, Nj = forest.shape
-
-while num_fires < target_num_fires:
-    print(num_fires)
-
-    forest = grow_trees(forest, p)
-
-    p_lightning = np.random.rand()
-    if p_lightning < f:
-        i0 = np.random.randint(Ni)
-        j0 = np.random.randint(Nj)
-
-        T = int(np.sum(forest)) #Current number of trees
-
-        fs, forest = propagate_fire(forest, i0, j0)
-        if fs > 0:
-            fire_size.append(fs)
-            num_fires += 1
-
-            #Generate random forest for a comparision
-            rf, i0_rf, j0_rf = random_forest(Ni, Nj, T)
-            fs_rf, rf = propagate_fire(rf, i0_rf, j0_rf)
-            rf_fire_size.append(fs_rf)
-
-    forest[np.where(forest == -1)] = 0
-print(f'Target of {target_num_fires} fire events reached')
-
-#Lets compare the forests
-c_CDF, s_rel = complementary_CDF(fire_size, forest.size)
-
-c_CDF_rf, s_rel_rf = complementary_CDF(rf_fire_size, forest.size)
-
-
-plt.loglog(s_rel, c_CDF, '.-', color='k', markersize=5,
-           label='grown with fire')
-plt.loglog(s_rel_rf, c_CDF_rf, '.-', color='b', markersize=5,
-           label='randomly generated')
-plt.title('Empirical cCDF')
-plt.xlabel('relative size')
-plt.ylabel('c CDF')
-plt.legend()
-plt.show()
-
-#Determine exponent for eth empirical cCDF by a linear fit
-min_rel_size = 1e-3
-max_rel_size = 5e-2
-
-is_min = np.searchsorted(s_rel, min_rel_size)
-is_max = np.searchsorted(s_rel, max_rel_size)
-
-p = np.polyfit(np.log(s_rel[is_min:is_max]), np.log(c_CDF[is_min: is_max]), 1)
-
-beta = p[0]
-print(f'The empirical cCDF has an exponent beta = {beta:.4}')
-
-alpha = 1 - beta
-print(f'The empirical prob. distr. exponent: -alpha')
-print(f'with alpha = {alpha:.4}')
 
 def powerlaw_random(alpha, x_min, num_drawings):
     """
@@ -352,6 +280,125 @@ def powerlaw_random(alpha, x_min, num_drawings):
     return random_values
 
 
+
+#Comparision of the fires:
+#N = 100 #Side of the forest
+#p = 0.01 #Growth probability
+#f = 0.2 #Lightning strike probability
+#target_num_fires = 300
+
+#forest = np.zeros([N,N])
+#fire_size = []
+
+#num_fires = 0
+#Ni, Nj = forest.shape
+
+N_list=[16, 32, 64, 128, 256, 512]
+target_num_fires = 300
+
+#Determine exponent for eth empirical cCDF by a linear fit
+min_rel_size = 1e-3
+max_rel_size = 5e-2
+
+avg_alpha = []
+
+fig, axs = plt.subplots(3, 2)
+for indx, N in enumerate(N_list):
+    alpha_list = []
+    s_rel_list = [] 
+    c_CDF_list = []
+    #c_CDF_rf_list = []
+    #s_rel_rf_list = []
+
+    for i in range(5):
+        #rf_fire_size = [] #Empty list of fire history for random forest
+        forest = np.zeros([N,N]) #Empty forest
+        fire_size = [] #Empty list of fire sizes
+
+        Ni, Nj = forest.shape
+
+        fire_history = []
+
+        num_fires = 0
+
+        while num_fires < target_num_fires:
+            print(num_fires)
+
+            forest = grow_trees(forest, p)
+
+            p_lightning = np.random.rand()
+            if p_lightning < f:
+                i0 = np.random.randint(Ni)
+                j0 = np.random.randint(Nj)
+
+                T = int(np.sum(forest)) #Current number of trees
+
+                fs, forest = propagate_fire(forest, i0, j0)
+                if fs > 0:
+                    fire_size.append(fs)
+                    num_fires += 1
+
+                    #Generate random forest for a comparision
+                    #rf, i0_rf, j0_rf = random_forest(Ni, Nj, T)
+                    #fs_rf, rf = propagate_fire(rf, i0_rf, j0_rf)
+                    #rf_fire_size.append(fs_rf)
+
+            forest[np.where(forest == -1)] = 0
+        print(f'Target of {target_num_fires} fire events reached')
+
+        #Lets compare the forests
+        c_CDF, s_rel = complementary_CDF(fire_size, forest.size)
+
+        #c_CDF_rf, s_rel_rf = complementary_CDF(rf_fire_size, forest.size)
+
+        c_CDF_list.append(c_CDF)
+        s_rel_list.append(s_rel)
+        #c_CDF_rf_list.append(c_CDF_rf)
+        #s_rel_rf_list.append(s_rel_rf)
+
+        is_min = np.searchsorted(s_rel, min_rel_size)
+        is_max = np.searchsorted(s_rel, max_rel_size)
+
+        new_p = np.polyfit(np.log(s_rel[is_min:is_max]), np.log(c_CDF[is_min: is_max]), 1)
+
+        beta = new_p[0]
+        print(f'The empirical cCDF has an exponent beta = {beta:.4}')
+
+        alpha = 1 - beta
+        print(f'The empirical prob. distr. exponent: -alpha')
+        print(f'with alpha = {alpha:.4}')
+        alpha_list.append(alpha)
+    
+    alpha_sum = sum(alpha_list)
+    avg_alpha.append(alpha_sum / len(alpha_list))
+
+    first = indx % 3
+    second = indx // 3
+    print(f"N is {indx} which gives {first, second}, ")
+    for i in range(len(s_rel_list)):
+        axs[first, second].loglog(s_rel[i], c_CDF[i], '.-', color='k', markersize=5,
+                   label=f'N = {N},  i = {i}')
+    #plt.loglog(s_rel_rf, c_CDF_rf, '.-', color='b', markersize=5,
+    #           label='randomly generated')
+
+    #plt.legend()
+    axs[first, second].text(
+    0.95, 0.95,
+    f'avg alpha = {avg_alpha[-1]}, st dev = {stdev(alpha_list)}',
+    transform=axs[first, second].transAxes,
+    ha='right', va='top'
+    )
+    axs[first, second].legend(fontsize = 6)
+    axs[first, second].set_title('Empirical cCDF')
+    axs[first, second].set_xlabel('relative size')
+    axs[first, second].set_ylabel('c CDF')
+    axs[first, second].axvline(min_rel_size, color='gray', linestyle='--', linewidth=0.8)
+    axs[first, second].axvline(max_rel_size, color='gray', linestyle='--', linewidth=0.8)
+
+
+plt.show()
+
+"""
 x_min = 1  # minimum value for the generated numbers
 num_drawings = 5000  
 
@@ -369,4 +416,4 @@ plt.title('Comparison with synthetic data')
 plt.xlabel('relative size')
 plt.ylabel('c CDF')
 plt.legend()
-plt.show()
+plt.show()"""
