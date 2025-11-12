@@ -305,8 +305,8 @@ plt.show()
 #stdev_alpha is list
 
 N_rev = [x**-1 for x in N_list]
-y_error_min = [all_avg_alpha[i] - all_stdev_alpha[i] for i in range(repititions+1)]
-y_error_max = [all_avg_alpha[i] + all_stdev_alpha[i] for i in range(repititions+1)]
+y_error_min = [all_stdev_alpha[i] for i in range(repititions+1)]
+y_error_max = [all_stdev_alpha[i] for i in range(repititions+1)]
 
 print(len(y_error_max))
 print(len(all_avg_alpha))
