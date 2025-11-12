@@ -1,21 +1,3 @@
-#Forest: Square lattice N x N initially empty
-#Each cell of the lattic can host a tree
-#Each round: Trees can grow in the forest (probability: p) 
-#and a lightning can hit (probability: f)
-#If the lightning hits a cell with a tree, ti ignites a fire 
-#event
-#The fire:
-# Propagates to the neighbouring cells (Von Neumann neighbourhood)
-#that are occupied by a tree
-#Is propagated to the neighbouts recursively
-#Cannot propagate to empty cells or cells that were already ignited
-#Stops whn it doesnt find any more tree to burn
-#After fire, caluclate num of trees burned
-
-#0: Empty cell
-#1: Cell with tree
-#-1: cell on fire during fire event (turns to 0 at end of round)
-
 import numpy as np
 from matplotlib import pyplot as plt
 import random
@@ -160,34 +142,6 @@ def propagate_fire(forest, i0, j0):
 p = 0.01 #Growth probability
 f = 0.2 #Lightning strike probability
 
-
-"""
-#Plot fire history over time
-from matplotlib import pyplot as plt
-t = np.array(np.arange(len(fire_history)))
-fh = np.array(fire_history) / forest.size
-
-plt.plot(t, fh, '.-', color='k', markersize=5)
-plt.title('Fire History')
-plt.xlabel('step')
-plt.ylabel('relative fire size')
-plt.show()
-#Plot fire sizes over time
-max_fire_size = max(fire_size)
-
-bin_width = 100
-bins_edges = (np.arange(0, max_fire_size + bin_width, bin_width) - 0.5 * bin_width)
-bins = bins_edges[1:] + 0.5 * bin_width
-
-occurrance = np.histogram(fire_size, bins=bins_edges)
-
-plt.bar(bins, occurrance[0], color= 'r', width=0.4, edgecolor='k')
-plt.title('Histogram of fire sizes')
-plt.xlabel('size')
-plt.ylabel('occurrence')
-plt.show()
-"""
-
 #Function for complementary cumulative distribution
 def complementary_CDF(f, f_max):
     """
@@ -209,15 +163,6 @@ def complementary_CDF(f, f_max):
     return c_CDF, s_rel
 
 
-"""
-c_CDF, s_rel = complementary_CDF(fire_size, forest.size)
-
-plt.loglog(s_rel, c_CDF, ".-", color='k', markersize=5, linewidth= 0.5)
-plt.title('Empirical cCDF')
-plt.xlabel('relative size')
-plt.ylabel('c CDF')
-plt.show()
-"""
 
 #Compare size of fires in fire grown forest vs. randomly 
 # grown forest of the same size (same num of trees)
@@ -225,37 +170,8 @@ plt.show()
 import random
 
 """
-def random_forest(Ni, Nj, T):
-    
-    Function to return a randomly grown forest.
-    Returns also the coordinates of the random ignition point
-    
-    Parameters
-    ==========
-    Ni: First dimension of the forest array
-    Nj: Second dimension fo the forest array
-    T: Integer, num of trees in forest
-    
-
-    #rf = np.zeros([Ni, Nj])
-
-    nt = random.sample(range(Ni * Nj), T)
-    i_list = list(map(lambda x: x % Ni, nt))
-    j_list = list(map(lambda x: x // Ni, nt))
-
-    #rf[i_list, j_list] = 1
-
-    #Coordinates of where lightning strikes
-    ignition = np.random.randint(T)
-    i_fire = i_list[ignition]
-    j_fire = j_list[ignition] 
-
-    return rf, i_fire, j_fire
-"""
-
-
 def powerlaw_random(alpha, x_min, num_drawings):
-    """
+    
     Function that returns numbers drawn from a probability distribution
     P(x) ~ x ** (- alpha) starting from random numbers in [0, 1].
     
@@ -264,7 +180,7 @@ def powerlaw_random(alpha, x_min, num_drawings):
     alpha : Exponent of the probability distribution. Must be > 1.
     x_min : Minimum value of the domain of P(x).
     num_drawings : Integer. Numbers of random numbers generated. 
-    """
+    
     
     if alpha <= 1:
         raise ValueError('alpha must be > 1')
@@ -278,40 +194,29 @@ def powerlaw_random(alpha, x_min, num_drawings):
     random_values = x_min * r ** (1 / (1 - alpha))
 
     return random_values
-
-
-
-#Comparision of the fires:
-#N = 100 #Side of the forest
-#p = 0.01 #Growth probability
-#f = 0.2 #Lightning strike probability
-#target_num_fires = 300
-
-#forest = np.zeros([N,N])
-#fire_size = []
-
-#num_fires = 0
-#Ni, Nj = forest.shape
+"""
 
 N_list=[16, 32, 64, 128, 256, 512]
 target_num_fires = 300
+repititions = 5
 
 #Determine exponent for eth empirical cCDF by a linear fit
-min_rel_size = 1e-3
-max_rel_size = 5e-2
+global_min_rel_size = 1e-3
+global_max_rel_size = 5e-2
 
-avg_alpha = []
+all_avg_alpha = []
+all_stdev_alpha = []
 
 fig, axs = plt.subplots(3, 2)
-for indx, N in enumerate(N_list):
+fig.tight_layout(h_pad=3, w_pad=3)
+colours = ["red", "green", "black", "blue", "pink"]
+min_rel_size_list = []
+for idx, N in enumerate(N_list):
     alpha_list = []
     s_rel_list = [] 
     c_CDF_list = []
-    #c_CDF_rf_list = []
-    #s_rel_rf_list = []
 
-    for i in range(5):
-        #rf_fire_size = [] #Empty list of fire history for random forest
+    for rep in range(repititions):
         forest = np.zeros([N,N]) #Empty forest
         fire_size = [] #Empty list of fire sizes
 
@@ -322,7 +227,7 @@ for indx, N in enumerate(N_list):
         num_fires = 0
 
         while num_fires < target_num_fires:
-            print(num_fires)
+            print(idx, rep, num_fires)
 
             forest = grow_trees(forest, p)
 
@@ -331,17 +236,12 @@ for indx, N in enumerate(N_list):
                 i0 = np.random.randint(Ni)
                 j0 = np.random.randint(Nj)
 
-                T = int(np.sum(forest)) #Current number of trees
+                #T = int(np.sum(forest)) #Current number of trees
 
                 fs, forest = propagate_fire(forest, i0, j0)
                 if fs > 0:
                     fire_size.append(fs)
                     num_fires += 1
-
-                    #Generate random forest for a comparision
-                    #rf, i0_rf, j0_rf = random_forest(Ni, Nj, T)
-                    #fs_rf, rf = propagate_fire(rf, i0_rf, j0_rf)
-                    #rf_fire_size.append(fs_rf)
 
             forest[np.where(forest == -1)] = 0
         print(f'Target of {target_num_fires} fire events reached')
@@ -349,15 +249,15 @@ for indx, N in enumerate(N_list):
         #Lets compare the forests
         c_CDF, s_rel = complementary_CDF(fire_size, forest.size)
 
-        #c_CDF_rf, s_rel_rf = complementary_CDF(rf_fire_size, forest.size)
-
         c_CDF_list.append(c_CDF)
         s_rel_list.append(s_rel)
-        #c_CDF_rf_list.append(c_CDF_rf)
-        #s_rel_rf_list.append(s_rel_rf)
 
-        is_min = np.searchsorted(s_rel, min_rel_size)
-        is_max = np.searchsorted(s_rel, max_rel_size)
+        min_fit = max(global_min_rel_size, s_rel[0] * 1.05)
+        max_fit = min(global_max_rel_size, s_rel[-1] * 0.95)
+
+
+        is_min = np.searchsorted(s_rel, min_fit)
+        is_max = np.searchsorted(s_rel, max_fit)
 
         new_p = np.polyfit(np.log(s_rel[is_min:is_max]), np.log(c_CDF[is_min: is_max]), 1)
 
@@ -370,50 +270,47 @@ for indx, N in enumerate(N_list):
         alpha_list.append(alpha)
     
     alpha_sum = sum(alpha_list)
-    avg_alpha.append(alpha_sum / len(alpha_list))
+    all_avg_alpha.append(alpha_sum / len(alpha_list))
 
-    first = indx % 3
-    second = indx // 3
-    print(f"N is {indx} which gives {first, second}, ")
+    row = idx // 2
+    col = idx % 2
+    print(f"N is {idx} which gives {row, col}, ")
+    print(s_rel_list)
     for i in range(len(s_rel_list)):
-        axs[first, second].loglog(s_rel[i], c_CDF[i], '.-', color='k', markersize=5,
-                   label=f'N = {N},  i = {i}')
-    #plt.loglog(s_rel_rf, c_CDF_rf, '.-', color='b', markersize=5,
-    #           label='randomly generated')
+        axs[row, col].loglog(s_rel_list[i], c_CDF_list[i], '.-', markersize=2,
+                   label=f'i = {i}', color = colours[i])
 
-    #plt.legend()
-    axs[first, second].text(
+    standard_dev=stdev(alpha_list)
+    all_stdev_alpha.append(standard_dev)
+    axs[row, col].text(
     0.95, 0.95,
-    f'avg alpha = {avg_alpha[-1]}, st dev = {stdev(alpha_list)}',
-    transform=axs[first, second].transAxes,
-    ha='right', va='top'
+    f'avg alpha = {all_avg_alpha[-1]:.3f} +- {standard_dev:.3f}',
+    transform=axs[row, col].transAxes,
+    ha='right', va='top',
+    fontsize=6
     )
-    axs[first, second].legend(fontsize = 6)
-    axs[first, second].set_title('Empirical cCDF')
-    axs[first, second].set_xlabel('relative size')
-    axs[first, second].set_ylabel('c CDF')
-    axs[first, second].axvline(min_rel_size, color='gray', linestyle='--', linewidth=0.8)
-    axs[first, second].axvline(max_rel_size, color='gray', linestyle='--', linewidth=0.8)
+    axs[row, col].legend(fontsize = 4)
+    axs[row, col].set_title(f'Empirical cCDF for N={N}', fontsize=6)
+    axs[row, col].set_xlabel('relative size', fontsize=4)
+    axs[row, col].set_ylabel('c CDF', fontsize=4)
+    axs[row, col].tick_params(axis='both', which='both', labelsize=6)
+    axs[row, col].axvline(min_fit, color='gray', linestyle='--', linewidth=0.8)
+    axs[row, col].axvline(max_fit, color='gray', linestyle='--', linewidth=0.8)
 
 
 plt.show()
 
-"""
-x_min = 1  # minimum value for the generated numbers
-num_drawings = 5000  
 
-pl_size = powerlaw_random(alpha, x_min, num_drawings)
+#avg_alpha is list
+#stdev_alpha is list
 
-c_CDF_pl, s_rel_pl = complementary_CDF(pl_size, forest.size)
+N_rev = [x**-1 for x in N_list]
+y_error_min = [all_avg_alpha[i] - all_stdev_alpha[i] for i in range(repititions+1)]
+y_error_max = [all_avg_alpha[i] + all_stdev_alpha[i] for i in range(repititions+1)]
 
-# Note loglog plot!
-plt.loglog(s_rel, c_CDF, '.-', color='k', linewidth=1, 
-           label='empirical')
-plt.loglog(s_rel_pl, c_CDF_pl, '-', color='g', linewidth=3, 
-           label='synthetic data')
-plt.xlim([min(s_rel), 1])
-plt.title('Comparison with synthetic data')
-plt.xlabel('relative size')
-plt.ylabel('c CDF')
-plt.legend()
-plt.show()"""
+print(len(y_error_max))
+print(len(all_avg_alpha))
+y_error = [y_error_min, y_error_max]
+
+plt.errorbar(N_rev, all_avg_alpha, yerr=y_error, fmt = 'o')
+plt.show()
