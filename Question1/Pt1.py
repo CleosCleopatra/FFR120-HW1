@@ -1,34 +1,10 @@
-#Simulate Lennard-Jones system (Fig 1.7 in book)
-#N=100 particles with diamter 1, mass=1
-#Particles mutually interact with L-J potential (Eq 1.1) parameter 1
-#System enclosed in squared box with reflecting boundaries
-#LxL: size of box
-#Initaly particles are position on squared lattice
-#Velocity with random orientation and magnituted v=1
-#Time step \Delta t=0.001. 
-#Magnitude of the interaction force between two particles:
-#r=np.sqrt((x[1]-x[2])**2+(y[1]-y[2])**2)
-#F(r)=24(parameter/r)*(2*(parameter/r)**12 -(parameter/r)**6))
-#Simulate for T_tot=10
-#Use leapfrog algorithm
-#Pt1:
-#Take L=10*parameter
-#Plot: configuration of system at t=T_tot, trajectory and mean square displacement MSD of a particle lying n the centre of the system as a function of time t=n \Delta t :
-#MSD(n \Delta t)=<(x_(i+n)-x_i)**2+(y_(i+n)-y_i)**2>=(1)/(S-n) \sum_{i=1}^{S-n} (x_{i+n}-x_i)**2+(y_{i+n}-y_i)**2
 
-
-
-
-
-#Force=m*a
 
 
 import numpy as np
-from matplotlib import pyplot as ply
-import random
+from matplotlib import pyplot as plt
 import math
 import time
-from scipy.constants import Boltzmann as kB
 from tkinter import *
 np.random.seed(0)
 
@@ -41,7 +17,7 @@ magnitude=1
 dt=0.001
 T_tot=10
 v0=1
-eps = 1 #Energy, should I hav this?
+eps = 1 
 S = 10000
 
 def list_neighbours(x,y,N_particles, cutoff_radius):
@@ -52,7 +28,6 @@ def list_neighbours(x,y,N_particles, cutoff_radius):
         neighbour_indices=np.where(distance <= cutoff_radius)
 
         neighbours.append(neighbour_indices)
-        #print(f"Neighbour indices is {neighbour_indices} and neighbour is {neighbours}")
         neighbour_number.append(len(neighbour_indices))
     return neighbours, neighbour_number
 
@@ -183,7 +158,7 @@ import matplotlib.pyplot as plt
 def main_part(L):
     #Set initial positions:
     x_min, x_max, y_min, y_max=-L/2, L/2, -L/2, L/2
-    cutoff_radius=5*sigma #WHat does this do?
+    cutoff_radius=5*sigma 
     
     x0, y0=np.meshgrid(
         np.linspace(x_min, x_max, int(np.sqrt(N_particles))),

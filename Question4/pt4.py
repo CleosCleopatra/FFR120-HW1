@@ -87,8 +87,8 @@ rule_2d = np.zeros([2, 9])
 #rule_2d[1, :] = [0, 0, 1, 1, 0, 0, 0, 0, 0] #Survival of living cell
 
 # Majority Rules.
-rule_2d[0, :] = [0, 0, 0, 0, 0, 1, 1, 1, 1]
-rule_2d[1, :] = [0, 0, 0, 0, 1, 1, 1, 1, 1]
+rule_2d[0, :] = [0, 0, 0, 0, 0, 0, 1, 1, 1]
+rule_2d[1, :] = [0, 0, 0, 0, 0, 1, 1, 1, 1]
 
 
 import matplotlib.pyplot as plt
